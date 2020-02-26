@@ -1,7 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 from typing import List
 
 pd.set_option('display.max_columns', 200)
