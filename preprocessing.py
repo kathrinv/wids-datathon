@@ -151,11 +151,14 @@ def impute_missing_values(df):
         'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
     df_new = impute_with_value(df_new, cols=c, value = 0.0)
     
+    # REMOVED due to inability to calculate % death for out-of-sample cases
+    # MOREOVER hospital_ids are different btwn in sample & out-of-sample
     # Bin hospital_id based on number of deaths
-    h = df_new.groupby('hospital_id').sum()['hospital_death']/df.groupby('hospital_id').count()['hospital_death']
-    h = list(zip(h.index, list(h)))
-    dic = {i:'less than 10%' if j < 0.1 else '10-20%' if j < 0.2 else 'greater than 20%' for i,j in h}
-    df_new['hospital_death_rate'] = df_new['hospital_id'].apply(lambda x: dic[x])
+#     h = df_new.groupby('hospital_id').sum()['hospital_death']/df_new.groupby('hospital_id').count()['hospital_death']
+#     h = list(zip(h.index, list(h)))
+#     dic = {i:'less than 10%' if j < 0.1 else '10-20%' if j < 0.2 else 'greater than 20%' for i, j in h}
+#     df_new['hospital_death_rate'] = df_new['hospital_id'].apply(lambda x: dic[x])
+    
     # Drop hospital_id
     df_new.drop('hospital_id', axis=1, inplace=True)
 
@@ -171,7 +174,7 @@ def one_hot_encode(df):
                         'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
                         'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
     df_new = change_col_type(df_new, cols = float_2_int_cols, to_type = 'int')
-    # hospital_death_rate = 3 unique
+    # hospital_death_rate = 3 unique --> NOTE: This has been removed. See lines 154-160 for details
     # ethnicity = 6 unique
     # gender = 2 unique
     # icu_admit_source = 5 unique
@@ -181,8 +184,9 @@ def one_hot_encode(df):
     # gcs_eyes_apache = 4 unique
     # gcs_motor_apache = 6 unique
     # apache_3j_bodysystem = 12 unique
-    categorical_cols = ['hospital_death_rate', 'ethnicity','gender', 'icu_admit_source', 'icu_stay_type', 'icu_type',
+    categorical_cols = ['ethnicity','gender', 'icu_admit_source', 'icu_stay_type', 'icu_type',
                         'gcs_eyes_apache', 'gcs_motor_apache', 'apache_3j_bodysystem']
+#     categorical_cols.append('hospital_death_rate')
     
     df_new = change_col_type(df_new, cols = categorical_cols, to_type = 'str')
     dummies = pd.get_dummies(df_new[categorical_cols], drop_first = True)
