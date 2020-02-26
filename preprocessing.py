@@ -11,9 +11,9 @@ pd.set_option('display.max_rows', 200)
 def import_df(path: str = ''):
     """
     """
-    df = pd.read_csv('training_v2.csv')
+    df = pd.read_csv(path + 'training_v2.csv')
     
-    return df, 
+    return df
 
 # composite function to clean dataset
 def impute_missing_values(df):
@@ -91,7 +91,7 @@ def impute_missing_values(df):
     # Fill NaN with mean
     a = ['age', 'd1_heartrate_max', 'd1_heartrate_min', 'd1_mbp_max', 'd1_mbp_min', 'd1_resprate_max', 'd1_resprate_min',
          'd1_spo2_max', 'd1_spo2_min', 'd1_sysbp_max', 'd1_sysbp_min']
-    df_new = impute_by_agg(df_new, agg_type='mean', cols=a)
+    df_new = impute_by_agg(df_new, cols=a, agg_type='mean')
     
     #impute median for the following column
     b = ['d1_sysbp_noninvasive_max', 'd1_sysbp_noninvasive_min', 'd1_temp_max', 'd1_temp_min', 'h1_diasbp_max', 
@@ -101,7 +101,7 @@ def impute_missing_values(df):
          'd1_hco3_max', 'd1_hco3_min', 'd1_hematocrit_max', 'd1_hematocrit_min', 'd1_platelets_max', 'd1_platelets_min', 
          'd1_potassium_max', 'd1_potassium_min', 'd1_sodium_max', 'd1_sodium_min', 'd1_wbc_max', 'd1_wbc_min', 
          'map_apache', 'resprate_apache', 'apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob' 'apache_2_diagnosis']
-    df_new = impute_by_agg(df_new, agg_type='median', cols=b)
+    df_new = impute_by_agg(df_new, cols=b, agg_type='median')
     
     
     # Fill categorical NaN with Other
@@ -114,7 +114,7 @@ def impute_missing_values(df):
     df_new.gcs_motor_apache.fillna(6.0, inplace=True)
     c = ['gcs_unable_apache', 'intubated_apache', 'arf_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
         'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
-    df_new = impute_with_value(df_new, value = 0.0, cols=c)
+    df_new = impute_with_value(df_new, cols=c, value = 0.0)
     
     # Bin hospital_id based on number of deaths
     h = df_new.groupby('hospital_id').sum()['hospital_death']/df.groupby('hospital_id').count()['hospital_death']
@@ -127,7 +127,7 @@ def impute_missing_values(df):
     return df_new
     
     
-    def impute_by_agg(df, agg_type: str = 'median', cols: List[str]):
+    def impute_by_agg(df, cols: List[str], agg_type: str = 'median'):
         """
         """
         if agg_type == 'median':
@@ -138,14 +138,14 @@ def impute_missing_values(df):
                 df[col].fillna(df[col].mean(), inplace=True)
         return df
     
-    def impute_with_value(df, value: float = 0.0, cols: List[str]):
+    def impute_with_value(df, cols: List[str], value: float = 0.0):
         """
         """
         for col in cols:
-            df[col]fillna(value, inplace=True)
+            df[col].fillna(value, inplace=True)
         return df
             
-    def find_columns(cols: List[str], name: str) --> List[str]:
+    def find_columns(cols: List[str], name: str) -> List[str]:
         """
         """
         return [col for col in cols if col.find(name) != -1]
@@ -175,7 +175,7 @@ def impute_missing_values(df):
                             'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
         df_new = change_col_type(df_new, cols = float_2_int_cols, to_type = 'int')
 
-        # hospital_id = 147 unique
+        # hospital_death_rate = 3 unique
         # ethnicity = 6 unique
         # gender = 2 unique
         # icu_admit_source = 5 unique
@@ -193,3 +193,5 @@ def impute_missing_values(df):
         df_dum = pd.concat([df_new, dummies], axis=1)
         df_dum.drop(categorical_cols, axis=1, inplace = True)
         return df_dum
+    
+    # add if name = main run 
