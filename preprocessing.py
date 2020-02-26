@@ -15,6 +15,43 @@ def import_df(path: str = ''):
     
     return df
 
+def impute_by_agg(df, cols: List[str], agg_type: str = 'median'):
+        """
+        """
+        if agg_type == 'median':
+            for col in cols:
+                df[col].fillna(df[col].median(), inplace=True)
+        elif agg_type == 'mean':
+            for col in cols:
+                df[col].fillna(df[col].mean(), inplace=True)
+        return df
+    
+def impute_with_value(df, cols: List[str], value: float = 0.0):
+        """
+        """
+        for col in cols:
+            df[col].fillna(value, inplace=True)
+        return df
+            
+def find_columns(cols: List[str], name: str) -> List[str]:
+        """
+        """
+        return [col for col in cols if col.find(name) != -1]
+    
+def change_col_type(df, cols: List[str], to_type: str = 'str'):
+        """
+        """
+        if to_type == 'str':
+            for col in cols:
+                df[col] = df[col].astype(str)
+        elif to_type == 'int':
+            for col in cols:
+                df[col] = df[col].astype(int)
+        elif to_type == 'float':
+            for col in cols:
+                df[col] = df[col].astype(float)
+        return df
+
 # composite function to clean dataset
 def impute_missing_values(df):
     """
@@ -72,7 +109,8 @@ def impute_missing_values(df):
     # hospital_admit_source = Similar to icu_admit_source, but has more null values. Used icu_admit_source instead
     # encounter_id = All unique values
     # patient_id = All unique values
-    y = ['icu_id','readmission_status','hospital_admit_source','encounter_id','patient_id']
+    # apache_3j_diagnosis = Used apache_2_diagnosis instead
+    y = ['icu_id','readmission_status','hospital_admit_source','encounter_id','patient_id', 'apache_3j_diagnosis']
     
     
     # Columns that have a high correlation with other columns
@@ -100,14 +138,14 @@ def impute_missing_values(df):
          'd1_calcium_max', 'd1_calcium_min', 'd1_creatinine_max', 'd1_creatinine_min', 'd1_glucose_max', 'd1_glucose_min', 
          'd1_hco3_max', 'd1_hco3_min', 'd1_hematocrit_max', 'd1_hematocrit_min', 'd1_platelets_max', 'd1_platelets_min', 
          'd1_potassium_max', 'd1_potassium_min', 'd1_sodium_max', 'd1_sodium_min', 'd1_wbc_max', 'd1_wbc_min', 
-         'map_apache', 'resprate_apache', 'apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob' 'apache_2_diagnosis']
+         'map_apache', 'resprate_apache', 'apache_4a_hospital_death_prob', 'apache_4a_icu_death_prob', 'apache_2_diagnosis']
     df_new = impute_by_agg(df_new, cols=b, agg_type='median')
     
     
     # Fill categorical NaN with Other
     df_new['ethnicity'].fillna('Other/Unknown', inplace=True)
     df_new['apache_3j_bodysystem'].fillna('Other', inplace=True)
-    df['icu_admit_source'].fillna('Other', inplace=True)
+    df_new['icu_admit_source'].fillna('Other', inplace=True)
     
     # Fill categorical columns with most common category
     df_new.gcs_eyes_apache.fillna(4.0, inplace=True)
@@ -126,72 +164,33 @@ def impute_missing_values(df):
 
     return df_new
     
-    
-    def impute_by_agg(df, cols: List[str], agg_type: str = 'median'):
-        """
-        """
-        if agg_type == 'median':
-            for col in cols:
-                df[col].fillna(df[col].median(), inplace=True)
-        elif agg_type == 'mean':
-            for col in cols:
-                df[col].fillna(df[col].mean(), inplace=True)
-        return df
-    
-    def impute_with_value(df, cols: List[str], value: float = 0.0):
-        """
-        """
-        for col in cols:
-            df[col].fillna(value, inplace=True)
-        return df
-            
-    def find_columns(cols: List[str], name: str) -> List[str]:
-        """
-        """
-        return [col for col in cols if col.find(name) != -1]
-    
-    def change_col_type(df, cols: List[str], to_type: str = 'str'):
-        """
-        """
-        if to_type == 'str':
-            for col in cols:
-                df[col] = df[col].astype(str)
-        elif to_type == 'int':
-            for col in cols:
-                df[col] = df[col].astype(int)
-        elif to_type == 'float':
-            for col in cols:
-                df[col] = df[col].astype(float)
-        return df
-            
-        
-    def one_hot_encode(df):
-        """
-        """
-        df_new = df.copy()
-        # Floats in categorical columns that need to be converted to ints
-        float_2_int_cols = ['apache_2_diagnosis', 'arf_apache', 'gcs_eyes_apache', 'gcs_motor_apache', 'gcs_unable_apache',
-                            'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
-                            'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
-        df_new = change_col_type(df_new, cols = float_2_int_cols, to_type = 'int')
 
-        # hospital_death_rate = 3 unique
-        # ethnicity = 6 unique
-        # gender = 2 unique
-        # icu_admit_source = 5 unique
-        # icu_stay_type = 3 unique
-        # apache_2_diagnosis = 44 unique
-        # icu_type = 8 unique
-        # gcs_eyes_apache = 4 unique
-        # gcs_motor_apache = 6 unique
-        # apache_3j_bodysystem = 12 unique
-        categorical_cols = ['hospital_death_rate', 'ethnicity','gender', 'icu_admit_source', 'icu_stay_type', 'icu_type',
-                            'gcs_eyes_apache', 'gcs_motor_apache', 'apache_3j_bodysystem']
-        
-        df_new = change_col_type(df_new, cols = categorical_cols, to_type = 'str')
-        dummies = pd.get_dummies(df_new[categorical_cols], drop_first = True)
-        df_dum = pd.concat([df_new, dummies], axis=1)
-        df_dum.drop(categorical_cols, axis=1, inplace = True)
-        return df_dum
+def one_hot_encode(df):
+    """
+    """
+    df_new = df.copy()
+    # Floats in categorical columns that need to be converted to ints
+    float_2_int_cols = ['apache_2_diagnosis', 'arf_apache', 'gcs_eyes_apache', 'gcs_motor_apache', 'gcs_unable_apache',
+                        'intubated_apache', 'ventilated_apache', 'aids', 'cirrhosis', 'diabetes_mellitus',
+                        'hepatic_failure', 'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
+    df_new = change_col_type(df_new, cols = float_2_int_cols, to_type = 'int')
+    # hospital_death_rate = 3 unique
+    # ethnicity = 6 unique
+    # gender = 2 unique
+    # icu_admit_source = 5 unique
+    # icu_stay_type = 3 unique
+    # apache_2_diagnosis = 44 unique
+    # icu_type = 8 unique
+    # gcs_eyes_apache = 4 unique
+    # gcs_motor_apache = 6 unique
+    # apache_3j_bodysystem = 12 unique
+    categorical_cols = ['hospital_death_rate', 'ethnicity','gender', 'icu_admit_source', 'icu_stay_type', 'icu_type',
+                        'gcs_eyes_apache', 'gcs_motor_apache', 'apache_3j_bodysystem']
     
-    # add if name = main run 
+    df_new = change_col_type(df_new, cols = categorical_cols, to_type = 'str')
+    dummies = pd.get_dummies(df_new[categorical_cols], drop_first = True)
+    df_dum = pd.concat([df_new, dummies], axis=1)
+    df_dum.drop(categorical_cols, axis=1, inplace = True)
+    return df_dum
+    
+# add if name = main run 
